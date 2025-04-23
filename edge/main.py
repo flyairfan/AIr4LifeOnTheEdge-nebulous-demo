@@ -1,14 +1,23 @@
 # main.py
 # AIr4LifeOnTheEdge – Edge Node Main Script
 #
-# This script simulates reading data from a soiling sensor,
-# checks if cleaning is needed, triggers drone cleaning (simulated),
+# This script runs on a Raspberry Pi CM5 (Ubuntu 22.04, 4CPU/4GB RAM+).
+# It ingests environmental sensor data, detects soiling events, triggers the cleaning drone,
 # and reports telemetry to the cloud (NebulOuS orchestrator).
-# Replace TODO sections with hardware-specific code as the project progresses.
+# It is also designed to integrate predictive maintenance triggers from Copernicus data.
 
 import time
 import logging
 import random
+
+# === Predictive Maintenance Integration ===
+# The following import assumes predictive_trigger.py is on the Python path or in the repo root.
+# In deployment, add this folder to PYTHONPATH or use relative imports as needed.
+try:
+    from predictive_maintenance.predictive_trigger import should_trigger_preemptive_cleaning
+    PREDICTIVE_AVAILABLE = True
+except ImportError:
+    PREDICTIVE_AVAILABLE = False
 
 # --- CONFIGURATION SECTION ---
 SENSOR_POLL_INTERVAL = 10    # seconds
@@ -33,13 +42,14 @@ def read_soiling_sensor():
     """
     return round(random.uniform(0.3, 1.0), 2)
 
-def trigger_cleaning():
+def trigger_cleaning(reason="soiling"):
     """
     Simulate sending a command to the drone to begin cleaning.
-
-    TODO: Replace with real drone command (MQTT/REST API/cable).
+    'reason' can be 'soiling' (sensor), or 'predictive' (Copernicus forecast).
     """
-    logging.info("Triggering drone cleaning mission...")
+    logging.info(f"Triggering drone cleaning mission due to {reason}.")
+
+    # TODO: Replace with real drone command (MQTT/REST API/cable).
 
 def report_to_cloud(soiling_level):
     """
@@ -56,9 +66,16 @@ def main():
         soiling_level = read_soiling_sensor()
         logging.info(f"Current soiling level: {soiling_level}")
 
+        # --- Reactive trigger (sensor-based) ---
         if soiling_level >= SOILING_THRESHOLD:
             logging.warning("Soiling above threshold! Initiating cleaning.")
-            trigger_cleaning()
+            trigger_cleaning(reason="soiling")
+
+        # --- Predictive trigger (Copernicus forecast-based) ---
+        if PREDICTIVE_AVAILABLE:
+            if should_trigger_preemptive_cleaning():
+                logging.warning("Predictive trigger: Copernicus dust/forecast risk high; initiating preemptive cleaning.")
+                trigger_cleaning(reason="predictive")
 
         if cycle % CLOUD_REPORT_FREQ == 0:
             report_to_cloud(soiling_level)
@@ -66,6 +83,5 @@ def main():
         time.sleep(SENSOR_POLL_INTERVAL)
 
 if __name__ == "__main__":
-    logging.info("Starting AIr4LifeOnTheEdge edge node.")
+    logging.info("Starting AIr4LifeOnTheEdge edge node. Predictive trigger available: %s", PREDICTIVE_AVAILABLE)
     main()
-
