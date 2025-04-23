@@ -25,7 +25,7 @@ This repository demonstrates NebulOuS Open Call #2, Challenge #2 (IoT Applicatio
 ## What’s Included (Validation Highlights)
 
 - **Field Evidence:**  
-  - Real-world demo video: `/demo/almeria_cleaning_video.mp4`  
+  - Real-world demo video in /demo  
   - Peer-reviewed publication (see `/demo/` for DOI or PDF link)
 - **Predictive & Reactive Maintenance:**  
   - `/predictive_maintenance/` demonstrates planned Copernicus/forecast integration to trigger preemptive cleaning and scaling, in addition to real-time sensor triggers.
