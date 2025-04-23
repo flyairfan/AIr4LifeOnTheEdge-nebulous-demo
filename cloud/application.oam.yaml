@@ -1,0 +1,39 @@
+apiVersion: core.oam.dev/v1alpha2
+kind: ApplicationConfiguration
+metadata:
+  name: air4life-on-the-edge
+spec:
+  components:
+    - componentName: edge-cleaner
+      traits:
+        - type: scaler
+          properties:
+            min: 1
+            max: 5
+        - type: metrics
+          properties:
+            cpu: 0.7
+  parameters:
+    - name: SENSOR_POLL_INTERVAL
+      value: "10"
+    - name: SOILING_THRESHOLD
+      value: "0.7"
+---
+apiVersion: core.oam.dev/v1alpha2
+kind: Component
+metadata:
+  name: edge-cleaner
+spec:
+  type: worker
+  properties:
+    image: ghcr.io/yourusername/edge-cleaner:latest  # Replace with your actual image
+    ports:
+      - 8080
+    env:
+      - name: SENSOR_POLL_INTERVAL
+        value: "10"
+      - name: SOILING_THRESHOLD
+        value: "0.7"
+    resources:
+      cpu: "2"
+      memory: "2Gi"
