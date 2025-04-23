@@ -1,0 +1,6 @@
+Edge Node: Raspberry Pi Compute Module 5
+OS: Ubuntu 22.04 LTS (64-bit)
+CPU: 4 cores
+RAM: 8 GB
+Storage: 32 GB SD/eMMC
+Network: Quectel EC25 LTE modem, public IP assigned, open ports (e.g., 1883 for MQTT, SSH as needed)
