@@ -1,0 +1,5 @@
+# requirements.txt
+# For simulation, only logging and random are standard packages; 
+# add mqtt/requests if needed in the future.
+paho-mqtt
+requests
