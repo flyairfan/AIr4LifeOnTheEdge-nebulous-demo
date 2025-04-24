@@ -1,6 +1,17 @@
-Edge Node: Raspberry Pi Compute Module 5
-OS: Ubuntu 22.04 LTS (64-bit)
-CPU: 4 cores
+Edge Node Model: Raspberry Pi Compute Module 5
+CPU: 4 cores (ARM Cortex-A76)
 RAM: 8 GB
+OS: Ubuntu 22.04 LTS (64-bit)
 Storage: 32 GB SD/eMMC
-Network: Quectel EC25 LTE modem, public IP assigned, open ports (e.g., 1883 for MQTT, SSH as needed)
+Network: Quectel EC25 LTE modem
+Public IP: Yes (via LTE modem, dynamic/static as configured)
+Open Ports: 1883 (MQTT), 22 (SSH), others as needed
+
+NebulOuS Compliance:
+- Meets minimum requirements: Ubuntu 22.04+, 4 CPU, 4 GB RAM, public IP connectivity [see Open Call 2 Guidelines, p. 17][2].
+- Designed for both real-time sensor-driven and predictive (Copernicus/forecast-based) orchestration.
+- Supports dynamic scaling, remote orchestration, and automated maintenance as coordinated by the NebulOuS Meta-OS.
+
+Field Validation:
+- Hardware deployed and tested at Almería pilot site.
+- See `/demo/` for field photos and deployment evidence.
