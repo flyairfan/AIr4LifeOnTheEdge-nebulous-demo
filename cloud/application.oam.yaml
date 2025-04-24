@@ -3,6 +3,9 @@ kind: ApplicationConfiguration
 metadata:
   name: air4life-on-the-edge
 spec:
+  # --- Predictive Maintenance Integration ---
+  # This workflow integrates Copernicus/forecast data via the predictive_maintenance module.
+  # When dust storm risk is high, NebulOuS will preemptively trigger cleaning and/or scale resources.
   components:
     - componentName: edge-cleaner
       traits:
@@ -13,11 +16,21 @@ spec:
         - type: metrics
           properties:
             cpu: 0.7
+    - componentName: predictive-trigger
+      # This is a logical component representing the predictive Copernicus workflow.
+      # It does not run as a standalone service but acts as a trigger for orchestration.
+      traits:
+        - type: event-trigger
+          properties:
+            source: copernicus_forecast
+            action: preemptive_cleaning
+
   parameters:
     - name: SENSOR_POLL_INTERVAL
       value: "10"
     - name: SOILING_THRESHOLD
       value: "0.7"
+
 ---
 apiVersion: core.oam.dev/v1alpha2
 kind: Component
@@ -37,3 +50,17 @@ spec:
     resources:
       cpu: "2"
       memory: "2Gi"
+
+---
+apiVersion: core.oam.dev/v1alpha2
+kind: Component
+metadata:
+  name: predictive-trigger
+spec:
+  type: worker
+  properties:
+    # This is a placeholder to document the predictive maintenance logic.
+    # Real implementation is in /predictive_maintenance/ and integrated via analytics.py and main.py.
+    description: |
+      This component represents the planned integration of Copernicus/forecast data
+      to trigger preemptive cleaning and scaling. See /predictive_maintenance/ for details.
