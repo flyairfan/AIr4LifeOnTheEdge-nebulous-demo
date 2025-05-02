@@ -22,6 +22,9 @@ This repository demonstrates NebulOuS Open Call #2, Challenge #2 (IoT Applicatio
 
 ---
 
+![Sequence Diagram](./images/sequence.png)
+
+
 ## What’s Included (Validation Highlights)
 
 - **Field Evidence:**  
