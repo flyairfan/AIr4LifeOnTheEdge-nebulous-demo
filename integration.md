@@ -75,6 +75,7 @@ flowchart TD
     J --> K
     K --> L
     L --> M
+```
 
 2.1 Edge-to-Cloud Data Flow:
 
