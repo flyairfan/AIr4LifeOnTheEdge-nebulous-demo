@@ -1,3 +1,4 @@
+```mermaid
 flowchart TD
     A[Edge Node: Sensor Data Collection<br>(main.py)]
     B[Evaluate Sensor Data<br>(Soiling Value)]
