@@ -1,47 +1,50 @@
 """
 copernicus_fetcher.py
 
-This module attempts to fetch dust storm (or similar) forecast data from a Copernicus API.
-In a production environment, replace the placeholder URL, parameters, and API key with actual values.
-For now, if the request fails or the data is missing, the module falls back to generating a simulated risk.
+This module fetches dust storm (or dust risk) forecast data from the Copernicus Atmosphere Monitoring Service (CAMS).
+For production, register with CAMS and update the API URL and parameters accordingly.
+Usage:
+    - Replace the placeholder URL and API_KEY with your actual CAMS endpoint and credentials.
+    - Ensure error handling is in place; if the API call fails, the script falls back to a simulated risk value.
 """
 
 import requests
 import random
 
-# Placeholder API endpoint; update with the actual Copernicus API endpoint.
-API_URL = "https://api.example.com/copernicus/forecast"
-# In a production setting, do not hardcode your API key; load it securely instead.
-API_KEY = "YOUR_API_KEY_HERE"
+# Placeholder CAMS API endpoint for a dust forecast
+API_URL = "https://api.copernicus.eu/cams/v1/forecast/dust"  # Update this with the actual CAMS endpoint URL
+# Insert your CAMS API key here (remember to secure this in production)
+API_KEY = "YOUR_CAMS_API_KEY_HERE"
+
 DEFAULT_TIMEOUT = 10  # seconds
 
 def fetch_dust_forecast():
     """
-    Fetches the dust storm risk from the Copernicus API.
-    
+    Fetches the dust storm risk from the CAMS API.
+
     Returns:
-        dict: A dictionary with 'dust_storm_risk' as a float (0 to 1 scale).
-    
-    In the event of an error (HTTP or parsing), a simulated risk value is returned.
+        dict: A dictionary with 'dust_storm_risk' as a float on a 0 to 1 scale.
+
+    If the API call fails or the data cannot be parsed, falls back to a simulated risk value.
     """
     params = {
         "apikey": API_KEY,
-        "parameter": "dust_storm_risk",
-        "lat": 37.0,    # Example latitude (e.g., Almería)
-        "lon": -2.5,    # Example longitude (e.g., Almería)
-        # Add any additional parameters required by the API here.
+        "parameter": "dust_storm_risk",  # may need adjustment based on actual API requirements
+        "lat": 37.0,    # Example latitude (e.g., for Almería)
+        "lon": -2.5,    # Example longitude (e.g., for Almería)
+        # Add any additional parameters required by the actual CAMS API here.
     }
     
     try:
         response = requests.get(API_URL, params=params, timeout=DEFAULT_TIMEOUT)
-        response.raise_for_status()  # Raises HTTPError for bad responses.
-        data = response.json()  # Parse the JSON response.
+        response.raise_for_status()  # Will raise an HTTPError for bad responses.
+        data = response.json()         # Parse the JSON response.
         
-        # Assume the API returns a JSON with a key "risk" holding the dust storm risk value.
+        # Suppose the API returns a JSON with a key "risk" containing the dust storm risk value.
         risk_value = float(data.get("risk", 0))
         return {"dust_storm_risk": risk_value}
     except (requests.RequestException, ValueError) as exc:
-        print(f"Error fetching Copernicus forecast: {exc}")
+        print(f"Error fetching CAMS forecast: {exc}")
         # Fallback: simulate a dust storm risk value.
         simulated_risk = round(random.uniform(0, 1), 2)
         print(f"Returning simulated dust storm risk: {simulated_risk}")
