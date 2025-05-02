@@ -54,4 +54,13 @@ This folder contains all the key diagrams that describe the architecture and beh
 
 ---
 
-Each diagram plays an important part in visualizing different aspects of the system—from the high-level architecture and component relationships (Components Diagram) to the detailed interactions (Sequence Diagram), process flows (Activity Diagram), data transformations (Data Flow Diagram), and the internal state behavior (State Diagram).
+## 6. Deployment Diagram
+- **Description:**  
+  Shows how the system's components are physically deployed, including the edge node (Raspberry Pi), predictive maintenance services, cloud analytics, autoscaling logic, and the NebulOuS orchestrator. This diagram clarifies how the software is distributed across hardware and containers.
+- **Key Elements:**  
+  - **Edge Node:** Hosts `main.py` and communicates with sensor hardware.  
+  - **Predictive Maintenance Service:** Runs `predictive_trigger.py` and `copernicus_fetcher.py`.  
+  - **Cloud Infrastructure:** Contains Cloud Analytics (`analytics.py`), Autoscaling Logic (`scale_logic.py` and `autoscaling_policy.yaml`), and the orchestration layer.
+- **Filename:** `deployment_diagram.png`
+
+Each diagram plays an important part in visualizing different aspects of the system—from the high-level architecture and component relationships (Components Diagram) to the detailed interactions (Sequence Diagram), process flows (Activity Diagram), data transformations (Data Flow Diagram), internal state behavior (State Diagram), and physical deployment (Deployment Diagram).
