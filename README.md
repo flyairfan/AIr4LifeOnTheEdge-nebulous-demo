@@ -5,6 +5,10 @@ This repository demonstrates NebulOuS Open Call #2, Challenge #2 (IoT Applicatio
 
 ---
 
+
+![Sequence Diagram](./images/sequence.png)
+
+
 ## Repository Structure
 
 - `/demo/`  
@@ -21,8 +25,6 @@ This repository demonstrates NebulOuS Open Call #2, Challenge #2 (IoT Applicatio
   Raspberry Pi CM5 specs (Ubuntu 22.04, 4CPU/8GB RAM), LTE modem setup, and public-IP configuration.
 
 ---
-
-![Sequence Diagram](./images/sequence.png)
 
 
 ## What’s Included (Validation Highlights)
