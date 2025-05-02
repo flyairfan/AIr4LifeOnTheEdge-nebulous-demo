@@ -1,0 +1,14 @@
+version: '3'
+services:
+  server:
+    build: .
+    container_name: drone_server
+    ports:
+      - "5000:5000"
+    command: python server/edge_command_server.py
+  simulation:
+    build: .
+    container_name: sensor_simulation
+    depends_on:
+      - server
+    command: python simulation/simulate_sensor.py
