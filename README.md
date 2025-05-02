@@ -52,6 +52,8 @@ This repository demonstrates NebulOuS Open Call #2, Challenge #2 (IoT Applicatio
 
 ---
 
+![Sequence Diagram](./images/deployment.png)
+
 ## Usage & Quickstart
 
 - **Edge node:**  
