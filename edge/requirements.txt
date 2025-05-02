@@ -1,5 +1,4 @@
 # requirements.txt
-# For simulation, only logging and random are standard packages; 
-# add mqtt/requests if needed in the future.
-paho-mqtt
-requests
+Flask==2.2.5    # Web server for the REST API
+paho-mqtt       # For MQTT interactions (if needed)
+requests        # For HTTP requests in the simulation scripts
