@@ -130,6 +130,6 @@ flowchart TD
 
         Deepen integration with NebulOuS orchestration APIs for real-time SLA enforcement.
 
-5. Conclusion
+
 
 AIr4LifeOnTheEdge is a fully integrated system combining edge data collection, cloud analytics, predictive maintenance, and autoscaling. Its architecture aligns with NebulOuS standards, ensuring seamless deployment, dynamic resource management, and proactive operational decision-making.
