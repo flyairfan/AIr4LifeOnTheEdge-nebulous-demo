@@ -61,6 +61,6 @@ This folder contains all the key diagrams that describe the architecture and beh
   - **Edge Node:** Hosts `main.py` and communicates with sensor hardware.  
   - **Predictive Maintenance Service:** Runs `predictive_trigger.py` and `copernicus_fetcher.py`.  
   - **Cloud Infrastructure:** Contains Cloud Analytics (`analytics.py`), Autoscaling Logic (`scale_logic.py` and `autoscaling_policy.yaml`), and the orchestration layer.
-- **Filename:** `deployment_diagram.png`
+- **Filename:** `deployment.png`
 
 Each diagram plays an important part in visualizing different aspects of the system—from the high-level architecture and component relationships (Components Diagram) to the detailed interactions (Sequence Diagram), process flows (Activity Diagram), data transformations (Data Flow Diagram), internal state behavior (State Diagram), and physical deployment (Deployment Diagram).
