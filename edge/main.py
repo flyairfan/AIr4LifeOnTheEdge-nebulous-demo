@@ -16,7 +16,8 @@ import random
 try:
     from predictive_maintenance.predictive_trigger import should_trigger_preemptive_cleaning
     PREDICTIVE_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logging.warning(f"Predictive module unavailable: {str(e)}")
     PREDICTIVE_AVAILABLE = False
 
 # --- CONFIGURATION SECTION ---
