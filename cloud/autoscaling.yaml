@@ -1,4 +1,4 @@
-# scaling/autoscaling.yaml
+---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -30,16 +30,29 @@ spec:
         - type: Percent
           value: 50
           periodSeconds: 60
+
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: edge-cleaner
+  labels:
+    app: edge-cleaner
 spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: edge-cleaner
   template:
+    metadata:
+      labels:
+        app: edge-cleaner
     spec:
       containers:
         - name: edge-cleaner
+          image: ghcr.io/yourusername/edge-cleaner:latest  # Replace with your actual image
+          ports:
+            - containerPort: 5000  # Match your application's listening port
           resources:
             requests:
               cpu: "1"
@@ -47,4 +60,3 @@ spec:
             limits:
               cpu: "2"
               memory: "2Gi"
-
