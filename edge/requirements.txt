@@ -3,3 +3,5 @@ paho-mqtt==1.6.1
 requests==2.31.0
 gunicorn==21.2.0
 tenacity==8.2.2
+flask-talisman==1.0.0
+flask-limiter==3.5.0
