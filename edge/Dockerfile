@@ -1,6 +1,5 @@
 # Dockerfile
 # Production image for AIr4LifeOnTheEdge edge node
-# Rev 4.0 - Security hardened with non-root user and optimized layers
 
 FROM python:3.9-slim AS builder
 
@@ -23,13 +22,13 @@ FROM python:3.9-slim
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
+    wget \  # Replaced curl with wget for healthchecks
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
 RUN useradd -m -u 1001 -s /bin/bash edgeuser
 
-# Copy virtual environment
+# Copy virtual environment from builder stage
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
@@ -47,14 +46,14 @@ RUN chown -R edgeuser:edgeuser /app && \
 # Switch to non-root user
 USER edgeuser
 
-# Healthcheck (uses curl installed earlier)
+# Healthcheck using wget
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-    CMD curl -f http://localhost:5000/health || exit 1
+    CMD wget -q --spider http://localhost:5000/health || exit 1
 
 # Gunicorn configuration
 ENV GUNICORN_WORKERS=4 \
-    GUNICORN_TIMEOUT=120 \
-    GUNICORN_LOG_LEVEL=info
+    GUNICORN_TIMEOUT=120
 
 # Entrypoint script
 ENTRYPOINT ["/app/entrypoint.sh"]
+
