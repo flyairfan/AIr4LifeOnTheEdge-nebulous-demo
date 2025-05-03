@@ -14,7 +14,7 @@ import random
 # Placeholder CAMS API endpoint for a dust forecast
 API_URL = "https://api.copernicus.eu/cams/v1/forecast/dust"  # Update this with the actual CAMS endpoint URL
 # Insert your CAMS API key here (remember to secure this in production)
-API_KEY = "YOUR_CAMS_API_KEY_HERE"
+API_KEY = os.getenv("CAMS_API_KEY")
 
 DEFAULT_TIMEOUT = 10  # seconds
 
