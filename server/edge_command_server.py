@@ -27,7 +27,7 @@ def set_csp_nonce():
 
 csp = {
     'default-src': ["'self'"],
-    'script-src': ["'self'", "'nonce'", "'strict-dynamic'"],  # Talisman replaces 'nonce'
+    'script-src': ["'self'", "'nonce'", "'strict-dynamic'"],
     'style-src': ["'self'", "'unsafe-inline'"]
 }
 
@@ -45,7 +45,7 @@ Talisman(
     session_cookie_secure=True
 )
 
-# ===== RATE LIMITING ===== 
+# ===== RATE LIMITING =====
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
@@ -61,7 +61,7 @@ logger.setLevel(logging.INFO)
 # Rotating file handler (10MB files, keep 5 backups)
 file_handler = RotatingFileHandler(
     '/var/log/edge_command.log',
-    maxBytes=10*1024*1024,
+    maxBytes=10 * 1024 * 1024,
     backupCount=5,
     mode='a',
     chmod=0o0666  # Proper permissions for containerized environments
@@ -70,7 +70,7 @@ file_handler.setFormatter(logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 ))
 
-# Console handler
+# Console handler for immediate logging output
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(logging.Formatter(
     "%(levelname)s - %(message)s"
@@ -113,14 +113,12 @@ def trigger_mission():
 
         # === Mission Execution ===
         result = start_mission()
-        
         if "failed" in result.lower():
             logger.error("Mission failure: %s", result)
             return jsonify_error("MISSION_FAILURE", result, 500)
 
         logger.info("Mission success: %s", result)
         return jsonify_success(result)
-
     except Exception as e:
         logger.critical("System failure: %s", str(e), exc_info=True)
         return jsonify_error("INTERNAL_ERROR", "Contact support", 500)
@@ -134,7 +132,7 @@ def validate_jwt(auth_header: str) -> bool:
             os.getenv('JWT_SECRET_KEY'),
             algorithms=["HS256"],
             issuer="air4life-auth",
-            audience="edge-node",
+            audience="edge-node",  # Must match your JWT client config
             options={"require_exp": True}
         )
         return True
@@ -186,4 +184,5 @@ if __name__ == "__main__":
                 return self.application
 
         FlaskApplication(app).run()
+
 
