@@ -1,3 +1,4 @@
+# scaling/autoscaling.yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -10,17 +11,6 @@ spec:
   minReplicas: 1
   maxReplicas: 5
   metrics:
-    # If you want to use a custom aggregated metric from Cloud Analytics,
-    # you can define a custom metric below. For example:
-    # - type: Pods
-    #   pods:
-    #     metric:
-    #       name: composite_metric
-    #     target:
-    #       type: AverageValue
-    #       averageValue: 130
-    #
-    # For now, we'll use the CPU utilization metric:
     - type: Resource
       resource:
         name: cpu
@@ -40,4 +30,21 @@ spec:
         - type: Percent
           value: 50
           periodSeconds: 60
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edge-cleaner
+spec:
+  template:
+    spec:
+      containers:
+        - name: edge-cleaner
+          resources:
+            requests:
+              cpu: "1"
+              memory: "512Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
 
