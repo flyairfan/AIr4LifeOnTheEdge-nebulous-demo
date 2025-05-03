@@ -1,84 +1,109 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: >
-  Lean CloudFormation template for AIr4LifeOnTheEdge: minimal setup for cloud analytics.
-  
-# PARAMETERS: Allow adjustments later without modifying the template
-Parameters:
-  InstanceType:
-    Type: String
-    Default: t2.micro
-    AllowedValues:
-      - t2.micro
-      - t2.small
-      - t2.medium
-    Description: "EC2 instance type for our cloud analytics node."
-    
-  AmiId:
-    Type: AWS::EC2::Image::Id
-    Description: "The AMI ID for the instance (e.g., Amazon Linux 2 or Ubuntu)."
-    
-  KeyName:
-    Type: AWS::EC2::KeyPair::KeyName
-    Description: "The EC2 Key Pair for SSH access."
+Description: Secure AWS deployment for AIr4LifeOnTheEdge cloud analytics with NebulOuS integration
 
-# RESOURCES: Define a simple, secure, and scalable environment
+Parameters:
+  EnvironmentName:
+    Description: Environment name prefix for resources
+    Type: String
+    Default: Air4LifeProd
+
+  InstanceType:
+    Description: EC2 instance type for cloud analytics node
+    Type: String
+    Default: t3.micro
+    AllowedValues:
+      - t3.micro
+      - t3.small
+      - t3.medium
+
+  AmiId:
+    Description: Amazon Linux 2 AMI ID
+    Type: AWS::EC2::Image::Id
+
+  KeyName:
+    Description: EC2 Key Pair for SSH access
+    Type: AWS::EC2::KeyPair::KeyName
+
+  SSHSourceIP:
+    Description: Allowed SSH source IP/CIDR (e.g., 123.45.67.89/32)
+    Type: String
+    Default: 123.45.67.89/32
+
+  VpcCIDR:
+    Description: VPC CIDR block
+    Type: String
+    Default: 10.192.0.0/16
+
+  PublicSubnetCIDR:
+    Description: Public subnet CIDR block
+    Type: String
+    Default: 10.192.10.0/24
+
+Conditions:
+  CreateNewVPC: !Equals [!Ref VpcId, ""]
+
 Resources:
-  
-  # Define a basic VPC (you can later reference your existing VPC if available)
   VPC:
     Type: AWS::EC2::VPC
+    Condition: CreateNewVPC
     Properties:
-      CidrBlock: 10.0.0.0/16
+      CidrBlock: !Ref VpcCIDR
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: "Air4LifeVPC"
+          Value: !Sub ${EnvironmentName}-VPC
 
-  # A public subnet for our instance
   PublicSubnet:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref VPC
-      CidrBlock: 10.0.1.0/24
+      VpcId: !If [CreateNewVPC, !Ref VPC, !Ref VpcId]
+      CidrBlock: !Ref PublicSubnetCIDR
       MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-PublicSubnet
 
-  # Security Group allowing SSH and HTTP (adjust as needed)
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Tags:
+      - Key: Name
+        Value: !Sub ${EnvironmentName}-IGW
+
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !If [CreateNewVPC, !Ref VPC, !Ref VpcId]
+      InternetGatewayId: !Ref InternetGateway
+
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      VpcId: !Ref VPC
-      GroupDescription: "Allow SSH and HTTP access."
+      GroupDescription: !Sub "Security group for ${EnvironmentName} nodes"
+      VpcId: !If [CreateNewVPC, !Ref VPC, !Ref VpcId]
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 0.0.0.0/0
+          CidrIp: !Ref SSHSourceIP
         - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-        # Uncomment the block below if you need a custom port for NebulOuS integration.
-        # - IpProtocol: tcp
-        #   FromPort: 5000
-        #   ToPort: 5000
-        #   CidrIp: 10.0.0.0/16
+          FromPort: 5000
+          ToPort: 5000
+          CidrIp: !If [CreateNewVPC, !Ref VpcCIDR, !Ref ExistingVpcCidr]
 
-  # IAM Role for the instance with minimal privileges – you can extend this later.
   InstanceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Principal:
-              Service: 
-                - ec2.amazonaws.com
-            Action: 
-              - sts:AssumeRole
+              Service: [ec2.amazonaws.com]
+            Action: ['sts:AssumeRole']
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
 
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -86,8 +111,7 @@ Resources:
       Roles:
         - !Ref InstanceRole
 
-  # Launch Configuration using the parameters and basic UserData
-  LaunchConfiguration:
+  LaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
       ImageId: !Ref AmiId
@@ -100,164 +124,36 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash
           yum update -y
-          # Install Docker (if needed) and other startup commands
-          # For example:
-          # amazon-linux-extras install docker -y
-          # service docker start
-          # docker run -d -p 5000:5000 your-docker-image
+          amazon-linux-extras install docker -y
+          systemctl enable docker
+          systemctl start docker
+          docker run -d -p 5000:5000 ${DockerImageURI}
 
-  # Auto Scaling Group: Keeps it lean; later you can add CloudWatch alarms and more policies.
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      VPCZoneIdentifier: 
-        - !Ref PublicSubnet
-      LaunchConfigurationName: !Ref LaunchConfiguration
-      MinSize: "1"
-      MaxSize: "3"
-      DesiredCapacity: "1"
+      VPCZoneIdentifier: [!Ref PublicSubnet]
+      LaunchConfigurationName: !Ref LaunchConfig
+      MinSize: 1
+      MaxSize: 3
+      DesiredCapacity: 1
       Tags:
         - Key: Name
-          Value: "CloudAnalyticsEC2"
+          Value: !Sub ${EnvironmentName}-Node
           PropagateAtLaunch: true
 
-# OUTPUTS: Provide helpful information
 Outputs:
-  AutoScalingGroupName:
-    Description: "Name of the Auto Scaling Group for our cloud analytics node."
-    Value: !Ref AutoScalingGroup
   VPCId:
-    Description: "The VPC ID used by the stack."
-    Value: !Ref VPC
-AWSTemplateFormatVersion: '2010-09-09'
-Description: >
-  Lean CloudFormation template for AIr4LifeOnTheEdge: minimal setup for cloud analytics.
-  
-# PARAMETERS: Allow adjustments later without modifying the template
-Parameters:
-  InstanceType:
-    Type: String
-    Default: t2.micro
-    AllowedValues:
-      - t2.micro
-      - t2.small
-      - t2.medium
-    Description: "EC2 instance type for our cloud analytics node."
-    
-  AmiId:
-    Type: AWS::EC2::Image::Id
-    Description: "The AMI ID for the instance (e.g., Amazon Linux 2 or Ubuntu)."
-    
-  KeyName:
-    Type: AWS::EC2::KeyPair::KeyName
-    Description: "The EC2 Key Pair for SSH access."
-
-# RESOURCES: Define a simple, secure, and scalable environment
-Resources:
-  
-  # Define a basic VPC (you can later reference your existing VPC if available)
-  VPC:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: 10.0.0.0/16
-      EnableDnsSupport: true
-      EnableDnsHostnames: true
-      Tags:
-        - Key: Name
-          Value: "Air4LifeVPC"
-
-  # A public subnet for our instance
+    Description: VPC ID
+    Value: !If [CreateNewVPC, !Ref VPC, !Ref VpcId]
   PublicSubnet:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: 10.0.1.0/24
-      MapPublicIpOnLaunch: true
-
-  # Security Group allowing SSH and HTTP (adjust as needed)
-  InstanceSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      VpcId: !Ref VPC
-      GroupDescription: "Allow SSH and HTTP access."
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-        # Uncomment the block below if you need a custom port for NebulOuS integration.
-        # - IpProtocol: tcp
-        #   FromPort: 5000
-        #   ToPort: 5000
-        #   CidrIp: 10.0.0.0/16
-
-  # IAM Role for the instance with minimal privileges – you can extend this later.
-  InstanceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: 
-                - ec2.amazonaws.com
-            Action: 
-              - sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-
-  InstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      Roles:
-        - !Ref InstanceRole
-
-  # Launch Configuration using the parameters and basic UserData
-  LaunchConfiguration:
-    Type: AWS::AutoScaling::LaunchConfiguration
-    Properties:
-      ImageId: !Ref AmiId
-      InstanceType: !Ref InstanceType
-      KeyName: !Ref KeyName
-      SecurityGroups:
-        - !Ref InstanceSecurityGroup
-      IamInstanceProfile: !Ref InstanceProfile
-      UserData:
-        Fn::Base64: !Sub |
-          #!/bin/bash
-          yum update -y
-          # Install Docker (if needed) and other startup commands
-          # For example:
-          # amazon-linux-extras install docker -y
-          # service docker start
-          # docker run -d -p 5000:5000 your-docker-image
-
-  # Auto Scaling Group: Keeps it lean; later you can add CloudWatch alarms and more policies.
-  AutoScalingGroup:
-    Type: AWS::AutoScaling::AutoScalingGroup
-    Properties:
-      VPCZoneIdentifier: 
-        - !Ref PublicSubnet
-      LaunchConfigurationName: !Ref LaunchConfiguration
-      MinSize: "1"
-      MaxSize: "3"
-      DesiredCapacity: "1"
-      Tags:
-        - Key: Name
-          Value: "CloudAnalyticsEC2"
-          PropagateAtLaunch: true
-
-# OUTPUTS: Provide helpful information
-Outputs:
+    Description: Public subnet ID
+    Value: !Ref PublicSubnet
+  SecurityGroupId:
+    Description: Instance security group ID
+    Value: !Ref InstanceSecurityGroup
   AutoScalingGroupName:
-    Description: "Name of the Auto Scaling Group for our cloud analytics node."
+    Description: Auto Scaling Group Name
     Value: !Ref AutoScalingGroup
-  VPCId:
-    Description: "The VPC ID used by the stack."
-    Value: !Ref VPC
+
 
