@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: edge-cleaner
-          image: REPLACE_WITH_YOUR_IMAGE_NAME  # e.g., ghcr.io/yourname/edge-cleaner:latest
+          image: REPLACE_WITH_YOUR_IMAGE_NAME
           imagePullPolicy: IfNotPresent
           resources:
             requests:
@@ -22,7 +22,7 @@ spec:
               memory: "512Mi"
             limits:
               cpu: "2"
-              memory: "2Gi"
+              memory: "1Gi"
           env:
             - name: SENSOR_POLL_INTERVAL
               value: "10"
@@ -31,5 +31,5 @@ spec:
             - name: CLOUD_REPORT_FREQ
               value: "5"
           ports:
-            - containerPort: 5000  # Match your Flask app's port
+            - containerPort: 5000
 
