@@ -1,24 +1,29 @@
 # Core dependencies
-Flask~=3.0.0              # Updated from 2.2.5 (supports Python 3.10+)
-paho-mqtt~=1.7.0          # Updated from 1.6.1 (MQTT protocol improvements)
-requests~=2.32.0          # Updated from 2.31.0 (security patches)
+Flask==2.2.3            # Long-term support version
+Werkzeug==2.3.7         # Updated for critical HTTP handling fixes
+paho-mqtt==1.6.1        # Proven stable version
+requests==2.31.0        # Security-patched version
 
 # Production server
-waitress~=3.0.2           # Using a more recent version
-gunicorn~=21.2.0          # Same stable version
+gunicorn==21.2.0        # Production-grade worker manager
+waitress==3.0.2         # WSGI server with HTTP/1.1 compliance
 
-# Security & rate limiting
-flask-talisman~=1.1.0     # Updated from 1.0.0 (new security headers)
-flask-limiter~=3.5.1      # Updated from 3.5.0 (bug fixes)
+# Security stack
+flask-talisman==1.0.0   # For CSP and related security headers
+flask-limiter==3.5.0    # Rate limiting middleware
+pyjwt==2.8.0            # JWT authentication with audience validation
+cryptography==42.0.4    # Cryptographic backend
+itsdangerous==2.1.2     # Secure signing library
 
-# Resilience & utilities
-tenacity~=8.2.3           # Updated from 8.2.2 (improvements in retry logic)
+# Resilience & storage
+tenacity==8.2.2         # Retry logic for resilience
+redis==4.5.5            # Redis client for rate limiting storage
 
-# Monitoring & metrics
-prometheus-client~=0.21.0
+# Monitoring
+prometheus-client==0.21.0  # Metrics exposure for Prometheus
 
-# Climate data integration
-cdsapi~=0.7.5
+# Climate integration
+cdsapi==0.7.5           # Copernicus API client for climate data
 
-# Development & testing (not needed in production)
-pytest~=8.2.0
+# Development & testing (exclude in production)
+pytest==8.2.0           # Testing framework
