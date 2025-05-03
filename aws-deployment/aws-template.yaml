@@ -7,15 +7,6 @@ Parameters:
     Type: String
     Default: Air4LifeProd
 
-  InstanceType:
-    Description: EC2 instance type for cloud analytics node
-    Type: String
-    Default: t3.micro
-    AllowedValues:
-      - t3.micro
-      - t3.small
-      - t3.medium
-
   AmiId:
     Description: Amazon Linux 2 AMI ID
     Type: AWS::EC2::Image::Id
@@ -44,10 +35,10 @@ Parameters:
     Type: String
     Default: 10.192.10.0/24
 
-  DockerImageURI:
-    Description: Docker image URI for edge cleaner
+  VpcId:
+    Description: Existing VPC ID (optional)
     Type: String
-    Default: "ghcr.io/yourorg/edge-cleaner:latest"
+    Default: ""
 
 Conditions:
   CreateNewVPC: !Equals [!Ref VpcId, ""]
@@ -63,8 +54,6 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName}-VPC
-        - Key: Environment
-          Value: !Ref EnvironmentName
 
   PublicSubnet:
     Type: AWS::EC2::Subnet
@@ -87,6 +76,9 @@ Resources:
     Properties:
       VpcId: !If [CreateNewVPC, !Ref VPC, !Ref VpcId]
       InternetGatewayId: !Ref InternetGateway
+    Tags:        # Fixed indentation here
+      - Key: Name
+        Value: !Sub ${EnvironmentName}-GW-Attachment
 
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -101,10 +93,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 5000
           ToPort: 5000
-          CidrIp: !If [CreateNewVPC, !Ref VpcCIDR, !Ref ExistingVpcCidr]
-      Tags:
-        - Key: Name
-          Value: !Sub ${EnvironmentName}-SG
+          CidrIp: !If [CreateNewVPC, !Ref VpcCIDR, !Ref ExistingVpcCidr]  # Fixed line
 
   InstanceRole:
     Type: AWS::IAM::Role
@@ -119,24 +108,18 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
         - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
-      Tags:
-        - Key: Environment
-          Value: !Ref EnvironmentName
 
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Roles:
         - !Ref InstanceRole
-      Tags:
-        - Key: Environment
-          Value: !Ref EnvironmentName
 
   LaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
       ImageId: !Ref AmiId
-      InstanceType: !Ref InstanceType
+      InstanceType: t3.micro
       KeyName: !Ref KeyName
       SecurityGroups:
         - !Ref InstanceSecurityGroup
@@ -162,9 +145,6 @@ Resources:
         - Key: Name
           Value: !Sub ${EnvironmentName}-Node
           PropagateAtLaunch: true
-        - Key: Environment
-          Value: !Ref EnvironmentName
-          PropagateAtLaunch: true
 
 Outputs:
   VPCId:
@@ -176,9 +156,7 @@ Outputs:
   SecurityGroupId:
     Description: Instance security group ID
     Value: !Ref InstanceSecurityGroup
-  AutoScalingGroupName:
-    Description: Auto Scaling Group Name
-    Value: !Ref AutoScalingGroup
+
 
 
 
