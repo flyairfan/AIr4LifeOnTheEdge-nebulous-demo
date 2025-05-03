@@ -1,30 +1,40 @@
 ```mermaid
 flowchart TD
-    A["Edge Node: Sensor Data Collection (main.py)"]
-    B["Evaluate Sensor Data (Soiling Value)"]
-    C["Reactive Trigger: Cleaning (if soiling ≥ threshold)"]
-    D["Proceed with Monitoring"]
-    E["Predictive Module (/predictive_maintenance/)"]
-    F["Fetch Forecast Data (copernicus_fetcher.py)"]
-    G{"Dust Storm Risk High? (risk > threshold)"}
-    H["Preemptive Trigger: Cleaning"]
-    I["Report Status to Cloud"]
-    J["Cloud Analytics Module (analytics.py)"]
-    K["Aggregate Data & Detect Anomalies"]
-    L["Autoscaling Logic (autoscaling.yaml + scale_logic.py)"]
-    M["Deploy/Scale Resources via NebulOuS OAM & K8s"]
-    
+    %% Edge Node Block
+    subgraph "Edge Node (Raspberry Pi CM5)"
+      A["Collect Sensor Data<br>(main.py)"]
+      B["Reactive Cleaning Trigger<br>(if soiling threshold exceeded)"]
+      C["Request Forecast Data<br>(for proactive cleaning)"]
+      D["Report Telemetry to Cloud"]
+    end
+
+    %% Predictive Maintenance Block
+    subgraph "Predictive Maintenance Module"
+      E["Copernicus Data Fetcher<br>(copernicus_fetcher.py)"]
+      F["Predictive Trigger<br>(predictive_trigger.py)"]
+    end
+
+    %% Cloud Analytics Block (AWS Integration)
+    subgraph "Cloud Analytics & Scaling (AWS)"
+      G["Process Sensor Data<br>(analytics.py)"]
+      H["Autoscaling Logic<br>(scale_logic.py)"]
+      I["AWS Cloud Infrastructure<br>(EC2, AutoScaling)"]
+    end
+
+    %% Orchestration Layer
+    subgraph "NebulOuS Orchestration"
+      J["OAM Descriptor<br>(application.oam.yaml)"]
+    end
+
+    %% Data Flow
     A --> B
-    B -- "Soiling High" --> C
-    B -- "Not High" --> D
-    A --> E
+    A --> C
+    A --> D
+    C --> F
     E --> F
-    F --> G
-    G -- "Yes" --> H
-    G -- "No" --> I
-    C --> I
+    F --> B
+    D --> G
+    G --> H
     H --> I
-    I --> J
-    J --> K
-    K --> L
-    L --> M
+    J --> G
+    J --> H
