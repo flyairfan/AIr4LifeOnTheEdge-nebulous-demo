@@ -1,0 +1,16 @@
+# config.schema.yaml
+type: object
+required:
+  - sensor
+  - server
+  - drone
+properties:
+  sensor:
+    type: object
+    required: [threshold, poll_interval]
+    properties:
+      threshold:
+        type: number
+        minimum: 0
+        maximum: 1
+  # ... other sections
