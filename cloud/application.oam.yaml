@@ -1,58 +1,30 @@
-apiVersion: core.oam.dev/v1alpha2
-kind: ApplicationConfiguration
+apiVersion: core.oam.dev/v1beta1
+kind: Application
 metadata:
-  name: air4life-on-the-edge
+  name: air4life-edge
 spec:
   components:
-    - componentName: edge-cleaner
-      traits:
-        - type: scaler
-          properties:
-            min: 1
-            max: 5
-    - componentName: predictive-trigger
-      # Logical component for predictive Copernicus workflow.
-      traits:
-        - type: event-trigger
-          properties:
-            source: copernicus_forecast
-            action: preemptive_cleaning
-  parameterValues:
-    - name: SENSOR_POLL_INTERVAL
-      value: "10"
-    - name: SOILING_THRESHOLD
-      value: "0.7"
+    - name: edge-cleaner
+      type: webservice
+      properties:
+        image: ghcr.io/yourorg/edge-cleaner:1.4.0  # Fixed: Using the actual image version
+        ports:
+          - port: 5000
+            expose: true
+        env:
+          - name: FLASK_ENV
+            value: production
 
----
-apiVersion: core.oam.dev/v1alpha2
-kind: Component
-metadata:
-  name: edge-cleaner
-spec:
-  type: worker
-  properties:
-    image: ghcr.io/yourusername/edge-cleaner:latest  # Replace with your actual image
-    ports:
-      - 5000
-  env:
-    - name: SENSOR_POLL_INTERVAL
-      value: "10"
-    - name: SOILING_THRESHOLD
-      value: "0.7"
-  resources:
-    cpu: "2"
-    memory: "2Gi"
+    - name: predictive-trigger  # Added new component for predictive maintenance
+      type: worker
+      properties:
+        cmd: ["python", "predictive/predictive_trigger.py"]
+        env:
+          - name: PREDICTIVE_THRESHOLD
+            value: "0.7"
+          - name: POLL_INTERVAL
+            value: "60"
+        dependencies:
+          - edge-cleaner
 
----
-apiVersion: core.oam.dev/v1alpha2
-kind: Component
-metadata:
-  name: predictive-trigger
-spec:
-  type: worker
-  properties:
-    # Placeholder for predictive maintenance logic.
-    description: |
-      This component represents the planned integration of Copernicus/forecast data
-      to trigger preemptive cleaning and scaling. See /predictive_maintenance/ for details.
 
