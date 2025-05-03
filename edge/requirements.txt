@@ -1,7 +1,24 @@
-Flask==2.2.5
-paho-mqtt==1.6.1
-requests==2.31.0
-gunicorn==21.2.0
-tenacity==8.2.2
-flask-talisman==1.0.0
-flask-limiter==3.5.0
+# Core dependencies
+Flask~=3.0.0              # Updated from 2.2.5 (supports Python 3.10+)
+paho-mqtt~=1.7.0          # Updated from 1.6.1 (MQTT protocol improvements)
+requests~=2.32.0          # Updated from 2.31.0 (security patches)
+
+# Production server
+waitress~=3.0.2           # Added explicit WSGI server dependency
+gunicorn~=21.2.0          # Kept at latest stable version
+
+# Security & rate limiting
+flask-talisman~=1.1.0     # Updated from 1.0.0 (new security headers)
+flask-limiter~=3.5.1      # Updated from 3.5.0 (bug fixes)
+
+# Resilience & utilities
+tenacity~=8.2.3           # Updated from 8.2.2 (retry logic improvements)
+
+# Monitoring & metrics
+prometheus-client~=0.21.0 # Added for Prometheus integration
+
+# Climate data integration
+cdsapi~=0.7.5             # Added explicit CDS API client
+
+# Development & testing (not needed in production)
+pytest~=8.2.0             # Added for testing framework
