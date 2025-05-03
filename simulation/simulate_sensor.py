@@ -9,17 +9,17 @@ import requests
 
 # === Configuration ===
 SENSOR_POLL_INTERVAL = float(os.getenv("SENSOR_POLL_INTERVAL", "5.0"))
-SOILING_THRESHOLD = float(os.getenv("SOILING_THRESHOLD", "0.7"))
+SOILING_THRESHOLD = float(os.getenv("SOILING_THRESHOLD", "0.7"))  # 0-1 scale
 SERVER_URL = os.getenv("SERVER_URL", "http://server:5000/start_mission")
 
 # === Logging Setup ===
 logger = logging.getLogger("SensorSimulation")
 logger.setLevel(logging.INFO)
 
-# Rotating file handler
+# Rotating file handler (2MB files, keep 2 backups)
 file_handler = RotatingFileHandler(
     'sensor_simulation.log',
-    maxBytes=2*1024*1024,  # 2MB per file
+    maxBytes=2*1024*1024,
     backupCount=2,
     encoding='utf-8'
 )
@@ -45,7 +45,7 @@ def trigger_mission(url: str) -> bool:
     try:
         response = requests.post(
             url,
-            json={"simulated": True},
+            json={"simulated": True, "value": random.uniform(0.7, 1.0)},
             timeout=5
         )
         response.raise_for_status()
@@ -58,13 +58,15 @@ def trigger_mission(url: str) -> bool:
 def generate_sensor_data() -> float:
     """Generate realistic sensor data with occasional spikes"""
     base_value = random.uniform(0.3, 0.6)
-    if random.random() < 0.1:  # 10% chance of spike
+    # 10% chance of artificial spike
+    if random.random() < 0.1:  
         return round(min(base_value + random.uniform(0.2, 0.5), 1.0), 2)
     return round(base_value, 2)
 
 def main():
     """Main simulation loop"""
-    logger.info("Starting sensor simulation | Threshold: %.2f | Interval: %.1fs", 
+    logger.info("""Starting sensor simulation 
+                | Threshold: %.2f | Interval: %.1fs""", 
                 SOILING_THRESHOLD, SENSOR_POLL_INTERVAL)
     
     try:
@@ -74,12 +76,13 @@ def main():
 
             if sensor_value >= SOILING_THRESHOLD:
                 logger.warning("Threshold exceeded (%.2f >= %.2f)", 
-                               sensor_value, SOILING_THRESHOLD)
+                              sensor_value, SOILING_THRESHOLD)
                 try:
                     trigger_mission(SERVER_URL)
-                    time.sleep(20)  # Extended delay post-trigger
+                    time.sleep(20)  # Extended cooldown after trigger
                 except Exception:
                     logger.error("Aborting mission trigger after retries")
+            
             time.sleep(SENSOR_POLL_INTERVAL)
     
     except KeyboardInterrupt:
