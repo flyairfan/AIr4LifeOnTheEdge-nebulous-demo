@@ -19,7 +19,7 @@ logger.setLevel(logging.INFO)
 # Rotating file handler (2MB files, keep 2 backups)
 file_handler = RotatingFileHandler(
     'sensor_simulation.log',
-    maxBytes=2*1024*1024,
+    maxBytes=2 * 1024 * 1024,
     backupCount=2,
     encoding='utf-8'
 )
@@ -41,50 +41,45 @@ logger.addHandler(stream_handler)
     stop=stop_after_attempt(3)
 )
 def trigger_mission(url: str) -> bool:
-    """Send mission trigger with retry logic"""
+    """Send mission trigger with retry logic."""
     try:
-        response = requests.post(
-            url,
-            json={"simulated": True, "value": random.uniform(0.7, 1.0)},
-            timeout=5
-        )
+        # Simulate including a 'value' metric in the payload
+        payload = {"simulated": True, "value": random.uniform(0.7, 1.0)}
+        response = requests.post(url, json=payload, timeout=5)
         response.raise_for_status()
-        logger.info("Mission triggered successfully")
+        logger.info("Mission triggered successfully with payload: %s", payload)
         return True
     except Exception as e:
         logger.error("Mission trigger failed: %s", str(e))
         raise
 
 def generate_sensor_data() -> float:
-    """Generate realistic sensor data with occasional spikes"""
+    """Generate realistic sensor data with occasional spikes."""
     base_value = random.uniform(0.3, 0.6)
-    # 10% chance of artificial spike
-    if random.random() < 0.1:  
+    # 10% chance of an artificial spike
+    if random.random() < 0.1:
         return round(min(base_value + random.uniform(0.2, 0.5), 1.0), 2)
     return round(base_value, 2)
 
 def main():
-    """Main simulation loop"""
-    logger.info("""Starting sensor simulation 
-                | Threshold: %.2f | Interval: %.1fs""", 
+    """Main simulation loop."""
+    logger.info("Starting sensor simulation | Threshold: %.2f | Interval: %.1fs",
                 SOILING_THRESHOLD, SENSOR_POLL_INTERVAL)
-    
     try:
         while True:
             sensor_value = generate_sensor_data()
             logger.info("Current simulated soiling: %.2f", sensor_value)
-
+            # Trigger cleaning mission if sensor value exceeds threshold.
             if sensor_value >= SOILING_THRESHOLD:
-                logger.warning("Threshold exceeded (%.2f >= %.2f)", 
-                              sensor_value, SOILING_THRESHOLD)
+                logger.warning("Threshold exceeded (%.2f >= %.2f)", sensor_value, SOILING_THRESHOLD)
                 try:
                     trigger_mission(SERVER_URL)
-                    time.sleep(20)  # Extended cooldown after trigger
+                    # Extended cooldown period after a trigger
+                    time.sleep(20)
                 except Exception:
                     logger.error("Aborting mission trigger after retries")
-            
+            # Wait for the next sensor read
             time.sleep(SENSOR_POLL_INTERVAL)
-    
     except KeyboardInterrupt:
         logger.info("Simulation shutdown requested")
     finally:
@@ -92,3 +87,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
