@@ -30,8 +30,7 @@ CLOUD_REPORT_FREQ = 5        # Report to cloud every N cycles
 # import requests
 
 # --- LOGGING SETUP ---
-logging.basicConfig(level=logging.INFO,
-   format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 def read_soiling_sensor():
     """
@@ -46,16 +45,14 @@ def read_soiling_sensor():
 def trigger_cleaning(reason="soiling"):
     """
     Simulate sending a command to the drone to begin cleaning.
-    'reason' can be 'soiling' (sensor), or 'predictive' (Copernicus forecast).
+    'reason' can be 'soiling' (sensor) or 'predictive' (Copernicus forecast).
     """
     logging.info(f"Triggering drone cleaning mission due to {reason}.")
-
-    # TODO: Replace with real drone command (MQTT/REST API/cable).
+    # TODO: Replace with real drone command integration (MQTT/REST API/cable).
 
 def report_to_cloud(soiling_level):
     """
     Simulate sending telemetry to the NebulOuS cloud orchestrator.
-
     TODO: Replace with actual cloud communication (REST API or MQTT publish).
     """
     logging.info(f"Reporting soiling level {soiling_level} to cloud.")
@@ -63,24 +60,26 @@ def report_to_cloud(soiling_level):
 def main():
     cycle = 0
     while True:
-        cycle += 1
-        soiling_level = read_soiling_sensor()
-        logging.info(f"Current soiling level: {soiling_level}")
+        try:
+            cycle += 1
+            soiling_level = read_soiling_sensor()
+            logging.info(f"Current soiling level: {soiling_level}")
 
-        # --- Reactive trigger (sensor-based) ---
-        if soiling_level >= SOILING_THRESHOLD:
-            logging.warning("Soiling above threshold! Initiating cleaning.")
-            trigger_cleaning(reason="soiling")
+            # --- Reactive trigger (sensor-based) ---
+            if soiling_level >= SOILING_THRESHOLD:
+                logging.warning("Soiling above threshold! Initiating cleaning.")
+                trigger_cleaning(reason="soiling")
 
-        # --- Predictive trigger (Copernicus forecast-based) ---
-        if PREDICTIVE_AVAILABLE:
-            if should_trigger_preemptive_cleaning():
+            # --- Predictive trigger (forecast-based) ---
+            if PREDICTIVE_AVAILABLE and should_trigger_preemptive_cleaning():
                 logging.warning("Predictive trigger: Copernicus dust/forecast risk high; initiating preemptive cleaning.")
                 trigger_cleaning(reason="predictive")
 
-        if cycle % CLOUD_REPORT_FREQ == 0:
-            report_to_cloud(soiling_level)
-
+            # --- Cloud Reporting ---
+            if cycle % CLOUD_REPORT_FREQ == 0:
+                report_to_cloud(soiling_level)
+        except Exception as exc:
+            logging.error(f"Error during cycle {cycle}: {exc}")
         time.sleep(SENSOR_POLL_INTERVAL)
 
 if __name__ == "__main__":
