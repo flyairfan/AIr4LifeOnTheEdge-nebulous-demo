@@ -1,29 +1,43 @@
 # config.yaml
-# AIr4LifeOnTheEdge Configuration File (v2.0)
+# AIr4LifeOnTheEdge Configuration File (v3.1)
+# All values use 0-1 scale unless otherwise noted
 
 mqtt:
-  broker: "mqtt://broker.hivemq.com:1883"
-  username: ""  # Add username if needed
-  password: ""  # Add password if needed
+  broker: "mqtt://broker.hivemq.com:1883"  # External broker URL
+  # Credentials should be set via Kubernetes Secrets
+  username: ""  # Leave empty if no authentication
+  password: ""  # Leave empty if no authentication
 
 server:
-  host: "0.0.0.0"
-  port: 5000
+  host: "0.0.0.0"  # Bind to all interfaces
+  port: 5000        # Must match Kubernetes Service port
 
 drone:
-  ip: "192.168.10.1"  # Replace with your drone's IP address if applicable
-  port: 8889
-  local_port: 9000
+  ip: "192.168.10.1"        # Tello drone IP (default)
+  port: 8889                # Fixed command port
+  local_port: 9000          # Local response port
 
 sensor:
-  threshold: 0.7  # 0-1 scale to match code (previously 80 in 1-100 scale)
-  poll_interval: 10  # seconds
-  calibration_factor: 1.0  # Adjust for sensor calibration
+  threshold: 0.7            # 0-1 scale (valid range: 0.0-1.0)
+  poll_interval: 10         # Seconds (min: 1, max: 3600)
+  calibration_factor: 1.0   # Adjust for hardware variance
 
 analytics:
-  cloud_report_freq: 5  # Report every 5 cycles
-  dust_risk_threshold: 0.7  # Aligns with predictive triggers
+  cloud_report_freq: 5      # Report every N cycles (min: 1)
+  dust_risk_threshold: 0.7  # Predictive trigger threshold
 
 predictive:
   cams_api_url: "https://api.ceda.ac.uk/cams-global-reanalysis"
-  compensation_factor: 1.25  # Compensate for CAMS underestimation
+  compensation_factor: 1.25 # Range: 1.0-1.5 (CAMS adjustment)
+
+# Validation schema (for documentation purposes)
+# _schema:
+#   sensor:
+#     threshold:
+#       type: float
+#       min: 0.0
+#       max: 1.0
+#     poll_interval:
+#       type: integer
+#       min: 1
+#       max: 3600
