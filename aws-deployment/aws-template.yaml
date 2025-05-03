@@ -30,14 +30,24 @@ Parameters:
     Default: 123.45.67.89/32
 
   VpcCIDR:
-    Description: VPC CIDR block
+    Description: VPC CIDR block (new VPC only)
     Type: String
     Default: 10.192.0.0/16
+
+  ExistingVpcCidr:
+    Description: Existing VPC CIDR block (if not creating new)
+    Type: String
+    Default: 10.0.0.0/16
 
   PublicSubnetCIDR:
     Description: Public subnet CIDR block
     Type: String
     Default: 10.192.10.0/24
+
+  DockerImageURI:
+    Description: Docker image URI for edge cleaner
+    Type: String
+    Default: "ghcr.io/yourorg/edge-cleaner:latest"
 
 Conditions:
   CreateNewVPC: !Equals [!Ref VpcId, ""]
@@ -53,6 +63,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName}-VPC
+        - Key: Environment
+          Value: !Ref EnvironmentName
 
   PublicSubnet:
     Type: AWS::EC2::Subnet
@@ -90,6 +102,9 @@ Resources:
           FromPort: 5000
           ToPort: 5000
           CidrIp: !If [CreateNewVPC, !Ref VpcCIDR, !Ref ExistingVpcCidr]
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-SG
 
   InstanceRole:
     Type: AWS::IAM::Role
@@ -104,12 +119,18 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
         - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
 
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Roles:
         - !Ref InstanceRole
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
 
   LaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
@@ -141,6 +162,9 @@ Resources:
         - Key: Name
           Value: !Sub ${EnvironmentName}-Node
           PropagateAtLaunch: true
+        - Key: Environment
+          Value: !Ref EnvironmentName
+          PropagateAtLaunch: true
 
 Outputs:
   VPCId:
@@ -155,5 +179,6 @@ Outputs:
   AutoScalingGroupName:
     Description: Auto Scaling Group Name
     Value: !Ref AutoScalingGroup
+
 
 
