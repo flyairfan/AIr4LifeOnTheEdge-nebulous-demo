@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: edge-cleaner
-          image: REPLACE_WITH_YOUR_IMAGE_NAME   # e.g., ghcr.io/yourname/edge-cleaner:latest
+          image: REPLACE_WITH_YOUR_IMAGE_NAME  # e.g., ghcr.io/yourname/edge-cleaner:latest
           imagePullPolicy: IfNotPresent
           resources:
             requests:
@@ -28,5 +28,8 @@ spec:
               value: "10"
             - name: SOILING_THRESHOLD
               value: "0.7"
+            - name: CLOUD_REPORT_FREQ
+              value: "5"
           ports:
-            - containerPort: 8080     # Adjust if your app exposes a port
+            - containerPort: 5000  # Match your Flask app's port
+
