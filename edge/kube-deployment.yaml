@@ -24,6 +24,7 @@ spec:
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "5000"
+        prometheus.io/path: "/metrics"
     spec:
       securityContext:
         runAsNonRoot: true
@@ -70,6 +71,7 @@ spec:
           volumeMounts:
             - name: logs
               mountPath: /app/logs
+              readOnly: false
       volumes:
         - name: logs
           persistentVolumeClaim:
