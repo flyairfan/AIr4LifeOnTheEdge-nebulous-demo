@@ -1,18 +1,29 @@
 # config.yaml
+# AIr4LifeOnTheEdge Configuration File (v2.0)
 
 mqtt:
   broker: "mqtt://broker.hivemq.com:1883"
-  username: ""         # Add username if needed
-  password: ""         # Add password if needed
+  username: ""  # Add username if needed
+  password: ""  # Add password if needed
 
 server:
   host: "0.0.0.0"
   port: 5000
 
 drone:
-  ip: "192.168.10.1"   # Replace with your drone's IP address if applicable
+  ip: "192.168.10.1"  # Replace with your drone's IP address if applicable
   port: 8889
   local_port: 9000
 
 sensor:
-  threshold: 80        # Sensor threshold for triggering actions
+  threshold: 0.7  # 0-1 scale to match code (previously 80 in 1-100 scale)
+  poll_interval: 10  # seconds
+  calibration_factor: 1.0  # Adjust for sensor calibration
+
+analytics:
+  cloud_report_freq: 5  # Report every 5 cycles
+  dust_risk_threshold: 0.7  # Aligns with predictive triggers
+
+predictive:
+  cams_api_url: "https://api.ceda.ac.uk/cams-global-reanalysis"
+  compensation_factor: 1.25  # Compensate for CAMS underestimation
