@@ -1,8 +1,40 @@
+# .dockerignore
+# Exclude unnecessary files from Docker builds
+
+# Python artifacts
 **/__pycache__
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
-.DS_Store
+*.egg-info
+*.so
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+
+# Environment and IDE files
 .env
-edge_node.log
+.env.local
+.venv
+.idea
+.vscode
+.DS_Store
+
+# Build and deployment artifacts
+dist/
+build/
+docker-compose*
 aws-deployment/
+kube-deployment/
+**/node_modules/
+
+# Documentation
+*.pdf
+*.md
+docs/
+
+# Local config overrides
+config.local.yaml
+**/temp/
