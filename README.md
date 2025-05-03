@@ -72,7 +72,6 @@ Refer to the Deployment Diagram provided in the `/image/` folder (or related doc
 
 The components overview:
 
-<pre>
 ```mermaid
 flowchart TD
     %% Edge Node Block
