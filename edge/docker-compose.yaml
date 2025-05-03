@@ -1,8 +1,7 @@
 version: '3.8'
-
 services:
   server:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     container_name: drone_server
@@ -14,28 +13,39 @@ services:
       - FLASK_DEBUG=false
       - SOILING_THRESHOLD=0.7
       - SENSOR_POLL_INTERVAL=10
-    command: python server/edge_command_server.py
-    restart: unless-stopped
+      - CLOUD_REPORT_FREQ=5
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 60s
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:5000/health || exit 1"]
+      interval: 30s
       timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
 
   simulation:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     container_name: sensor_simulation
     command: python simulation/simulate_sensor.py
     environment:
       - SENSOR_POLL_INTERVAL=10
+      - SOILING_THRESHOLD=0.7
+    networks:
+      - edge_network
     depends_on:
       server:
         condition: service_healthy
-    networks:
-      - edge_network
-    restart: unless-stopped
 
 networks:
   edge_network:
     driver: bridge
+
+volumes:
+  app_logs:
