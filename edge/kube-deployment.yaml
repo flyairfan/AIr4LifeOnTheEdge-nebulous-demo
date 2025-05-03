@@ -2,34 +2,89 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: edge-cleaner
+  labels:
+    app: air4life-edge
+    tier: backend
+    version: "1.3.0"
 spec:
-  replicas: 1
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
-      app: edge-cleaner
+      app: air4life-edge
   template:
     metadata:
       labels:
-        app: edge-cleaner
+        app: air4life-edge
+        tier: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5000"
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 3000
+        fsGroup: 2000
+      terminationGracePeriodSeconds: 30
       containers:
-        - name: edge-cleaner
-          image: REPLACE_WITH_YOUR_IMAGE_NAME
+        - name: edge-node
+          image: ghcr.io/yourorg/edge-cleaner:1.3.0
           imagePullPolicy: IfNotPresent
-          resources:
-            requests:
-              cpu: "1"
-              memory: "512Mi"
-            limits:
-              cpu: "2"
-              memory: "1Gi"
-          env:
-            - name: SENSOR_POLL_INTERVAL
-              value: "10"
-            - name: SOILING_THRESHOLD
-              value: "0.7"
-            - name: CLOUD_REPORT_FREQ
-              value: "5"
           ports:
             - containerPort: 5000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: edge-config
+            - secretRef:
+                name: edge-secrets
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sleep", "10"]
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: logs
+              mountPath: /app/logs
+      volumes:
+        - name: logs
+          persistentVolumeClaim:
+            claimName: edge-logs-pvc
 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: edge-service
+spec:
+  type: ClusterIP
+  selector:
+    app: air4life-edge
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
