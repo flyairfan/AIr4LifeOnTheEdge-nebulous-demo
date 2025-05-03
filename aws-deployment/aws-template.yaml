@@ -1,19 +1,54 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Minimal AWS template for AIr4LifeOnTheEdge cloud integration.
-Resources:
-  CloudAnalyticsEC2:
-    Type: AWS::EC2::Instance
-    Properties:
-      InstanceType: t2.micro
-      ImageId: ami-0abcdef1234567890  # Replace with a valid AMI ID
-      KeyName: your-key-pair          # Replace with your key pair name
-      SecurityGroups:
-        - Ref: InstanceSecurityGroup
+Description: >
+  Lean CloudFormation template for AIr4LifeOnTheEdge: minimal setup for cloud analytics.
+  
+# PARAMETERS: Allow adjustments later without modifying the template
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+    Description: "EC2 instance type for our cloud analytics node."
+    
+  AmiId:
+    Type: AWS::EC2::Image::Id
+    Description: "The AMI ID for the instance (e.g., Amazon Linux 2 or Ubuntu)."
+    
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "The EC2 Key Pair for SSH access."
 
+# RESOURCES: Define a simple, secure, and scalable environment
+Resources:
+  
+  # Define a basic VPC (you can later reference your existing VPC if available)
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: "Air4LifeVPC"
+
+  # A public subnet for our instance
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+
+  # Security Group allowing SSH and HTTP (adjust as needed)
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Enable SSH and HTTP access
+      VpcId: !Ref VPC
+      GroupDescription: "Allow SSH and HTTP access."
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
@@ -23,3 +58,69 @@ Resources:
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
+
+  # IAM Role for the instance with minimal privileges – you can extend this later.
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: 
+                - ec2.amazonaws.com
+            Action: 
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref InstanceRole
+
+  # Launch Configuration using the parameters and basic UserData (installing OS updates, Docker, etc.)
+  LaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !Ref AmiId
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      SecurityGroups:
+        - !Ref InstanceSecurityGroup
+      IamInstanceProfile: !Ref InstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          # Install Docker (if needed) and other startup commands
+          # For example:
+          # amazon-linux-extras install docker -y
+          # service docker start
+          # docker run -d -p 5000:5000 your-docker-image
+
+  # Auto Scaling Group: Keeps it lean; later you can add CloudWatch alarms and more policies.
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier: 
+        - !Ref PublicSubnet
+      LaunchConfigurationName: !Ref LaunchConfiguration
+      MinSize: "1"
+      MaxSize: "3"
+      DesiredCapacity: "1"
+      Tags:
+        - Key: Name
+          Value: "CloudAnalyticsEC2"
+          PropagateAtLaunch: true
+
+# OUTPUTS: Provide helpful information
+Outputs:
+  AutoScalingGroupName:
+    Description: "Name of the Auto Scaling Group for our cloud analytics node."
+    Value: !Ref AutoScalingGroup
+  VPCId:
+    Description: "The VPC ID used by the stack."
+    Value: !Ref VPC
