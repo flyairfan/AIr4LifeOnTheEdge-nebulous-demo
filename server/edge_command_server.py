@@ -15,7 +15,7 @@ app = Flask(__name__)
 
 # ===== SECURITY CONFIGURATION =====
 def generate_nonce():
-    """Generate cryptographically secure nonce for CSP per request"""
+    """Generate cryptographically secure nonce per request"""
     return secrets.token_hex(16)
 
 @app.before_request
@@ -45,7 +45,7 @@ Talisman(
     session_cookie_secure=True
 )
 
-# ===== RATE LIMITING =====
+# ===== RATE LIMITING ===== 
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
@@ -58,10 +58,9 @@ limiter = Limiter(
 logger = logging.getLogger("edge_command_server")
 logger.setLevel(logging.INFO)
 
-# Rotating file handler (10MB files, keep 5 backups)
 file_handler = RotatingFileHandler(
     '/var/log/edge_command.log',
-    maxBytes=10 * 1024 * 1024,
+    maxBytes=10*1024*1024,  # 10MB files
     backupCount=5,
     mode='a',
     chmod=0o0666  # Proper permissions for containerized environments
@@ -70,7 +69,6 @@ file_handler.setFormatter(logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 ))
 
-# Console handler for immediate logging output
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(logging.Formatter(
     "%(levelname)s - %(message)s"
@@ -83,7 +81,7 @@ logger.addHandler(stream_handler)
 @app.route('/health')
 @limiter.exempt
 def health_check():
-    """Kubernetes-compatible health endpoint with system checks"""
+    """Kubernetes liveness/readiness endpoint"""
     return jsonify({
         "status": "healthy",
         "version": os.getenv('APP_VERSION', '1.4.0'),
@@ -113,12 +111,14 @@ def trigger_mission():
 
         # === Mission Execution ===
         result = start_mission()
+        
         if "failed" in result.lower():
             logger.error("Mission failure: %s", result)
             return jsonify_error("MISSION_FAILURE", result, 500)
 
         logger.info("Mission success: %s", result)
         return jsonify_success(result)
+
     except Exception as e:
         logger.critical("System failure: %s", str(e), exc_info=True)
         return jsonify_error("INTERNAL_ERROR", "Contact support", 500)
@@ -132,8 +132,8 @@ def validate_jwt(auth_header: str) -> bool:
             os.getenv('JWT_SECRET_KEY'),
             algorithms=["HS256"],
             issuer="air4life-auth",
-            audience="edge-node",  # Must match your JWT client config
-            options={"require_exp": True}
+            audience="edge-node",
+            options={"require_exp": True}  # Critical security fix
         )
         return True
     except jwt.ExpiredSignatureError:
