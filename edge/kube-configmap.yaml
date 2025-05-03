@@ -4,29 +4,37 @@ metadata:
   name: edge-config
   labels:
     app: air4life-edge
+    environment: production
 data:
-  # Base configuration
+  # Environment Variables
   SENSOR_POLL_INTERVAL: "10"
   SOILING_THRESHOLD: "0.7"
   CLOUD_REPORT_FREQ: "5"
-  
-  # Server configuration
   SERVER_PORT: "5000"
-  
-  # Drone configuration
   DRONE_IP: "192.168.10.1"
   DRONE_PORT: "8889"
-  
-  # MQTT configuration (credentials handled via Secrets)
+  DRONE_LOCAL_PORT: "9000"
   MQTT_BROKER: "mqtt://broker.hivemq.com:1883"
-  
-  # Analytics configuration
   DUST_RISK_THRESHOLD: "0.7"
-  
-  # File-based config (alternative approach)
-  config.yaml: |
-    sensor:
-      poll_interval: ${SENSOR_POLL_INTERVAL}
-      threshold: ${SOILING_THRESHOLD}
+  CAMS_COMPENSATION_FACTOR: "1.25"
+
+  # Configuration Template (to be processed with envsubst)
+  config.yaml.tpl: |
+    mqtt:
+      broker: ${MQTT_BROKER}
     server:
+      host: "0.0.0.0"
       port: ${SERVER_PORT}
+    drone:
+      ip: ${DRONE_IP}
+      port: ${DRONE_PORT}
+      local_port: ${DRONE_LOCAL_PORT}
+    sensor:
+      threshold: ${SOILING_THRESHOLD}
+      poll_interval: ${SENSOR_POLL_INTERVAL}
+    analytics:
+      cloud_report_freq: ${CLOUD_REPORT_FREQ}
+      dust_risk_threshold: ${DUST_RISK_THRESHOLD}
+    predictive:
+      cams_api_url: "https://api.ceda.ac.uk/cams-global-reanalysis"
+      compensation_factor: ${CAMS_COMPENSATION_FACTOR}
