@@ -16,5 +16,4 @@ COPY . .
 EXPOSE 5000
 
 # Set the default command to run the Flask server.
-CMD [ "python", "server/edge_command_server.
-py" ]
+CMD [ "python", "server/edge_command_server.py" ]
