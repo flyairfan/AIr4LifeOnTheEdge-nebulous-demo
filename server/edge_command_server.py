@@ -11,108 +11,133 @@ from logging.handlers import RotatingFileHandler
 # Initialize Flask application
 app = Flask(__name__)
 
-# Security headers configuration
+# ========== SECURITY CONFIGURATION ==========
 csp = {
     'default-src': "'self'",
     'script-src': "'self'",
-    'style-src': "'self'"
+    'style-src': "'self' 'unsafe-inline'"
 }
-Talisman(app, content_security_policy=csp, force_https=False)
+Talisman(app, 
+         content_security_policy=csp,
+         force_https=os.getenv('FLASK_ENV') == 'production')
 
-# Rate limiting configuration
+# ========== RATE LIMITING ==========
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
-    default_limits=["60 per minute"]  # Prevent abuse
+    default_limits=["120 per minute", "2 per second"],
+    storage_uri="memory://"
 )
 
-# Enhanced logging configuration
+# ========== PRODUCTION LOGGING ==========
 logger = logging.getLogger("edge_command_server")
 logger.setLevel(logging.INFO)
 
 # Console handler
 stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+stream_handler.setFormatter(logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+))
 
-# File handler with rotation
+# Rotating file handler (5MB files, keep 3 backups)
 file_handler = RotatingFileHandler(
     'edge_command.log',
-    maxBytes=5*1024*1024,  # 5MB per file
+    maxBytes=5*1024*1024,
     backupCount=3,
     encoding='utf-8'
 )
-file_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+file_handler.setFormatter(logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+))
 
 logger.addHandler(stream_handler)
 logger.addHandler(file_handler)
 
+# ========== HEALTH ENDPOINT ==========
 @app.route('/health')
+@limiter.exempt
 def health_check():
-    """Endpoint for health monitoring and orchestration"""
-    return jsonify({"status": "healthy", "version": "1.2.0"}), 200
+    """Kubernetes-compatible health check endpoint"""
+    return jsonify({
+        "status": "healthy",
+        "version": "1.3.0",
+        "components": {
+            "drone_control": True,
+            "sensor_interface": True
+        }
+    }), 200
 
+# ========== MISSION CONTROL ENDPOINT ==========
 @app.route("/start_mission", methods=["POST"])
-@limiter.limit("10/minute")  # Stricter limit for mission triggers
+@limiter.limit("5/minute")  # Stricter limit for critical operations
 def trigger_mission():
     """
-    Secured endpoint to trigger drone cleaning mission.
-    
-    Validates request structure and implements defense-in-depth security.
+    Secured endpoint to initiate drone cleaning missions
+    Requires JSON payload with authorization token
     """
     try:
-        # Basic request validation
+        # ===== REQUEST VALIDATION =====
         if not request.is_json:
-            logger.warning("Invalid content type received")
-            return jsonify({"status": "error", "message": "Content-Type must be application/json"}), 415
-            
+            logger.warning("Invalid content type from %s", request.remote_addr)
+            return jsonify({
+                "status": "error",
+                "code": "INVALID_CONTENT_TYPE",
+                "message": "Content-Type must be application/json"
+            }), 415
+
         payload = request.get_json()
         
-        # Future-proof payload validation
-        if payload and 'emergency_override' in payload:
-            if not validate_override_token(payload['emergency_override']):
-                logger.warning("Invalid override token attempt")
-                return jsonify({"status": "error", "message": "Unauthorized"}), 403
+        # ===== AUTHORIZATION CHECK =====
+        if not validate_authorization(payload.get('token')):
+            logger.warning("Unauthorized request from %s", request.remote_addr)
+            return jsonify({
+                "status": "error",
+                "code": "UNAUTHORIZED",
+                "message": "Valid authorization token required"
+            }), 401
 
-        # Execute mission sequence
-        result = start_mission()
+        # ===== MISSION EXECUTION =====
+        logger.info("Initiating mission from %s", request.remote_addr)
+        mission_result = start_mission()
         
-        # Structured result analysis
-        if "failed" in result.lower():
-            logger.error(f"Mission failure: {result}")
+        if "failed" in mission_result.lower():
+            logger.error("Mission failure: %s", mission_result)
             return jsonify({
                 "status": "error",
                 "code": "MISSION_FAILURE",
-                "message": "Mission sequence failed"
+                "message": mission_result
             }), 500
 
-        logger.info(f"Mission success: {result}")
+        logger.info("Mission success: %s", mission_result)
         return jsonify({
             "status": "success",
             "code": "MISSION_COMPLETE",
-            "message": "Cleaning mission executed successfully"
+            "message": mission_result
         }), 200
 
     except Exception as e:
-        logger.critical(f"Critical system failure: {str(e)}", exc_info=True)
+        logger.critical("System failure: %s", str(e), exc_info=True)
         return jsonify({
             "status": "error",
-            "code": "SYSTEM_ERROR",
-            "message": "Internal server error"
+            "code": "INTERNAL_ERROR",
+            "message": "System malfunction - contact support"
         }), 500
 
-def validate_override_token(token: str) -> bool:
-    """Stub for future token validation logic"""
-    # Implement proper JWT/OAuth validation in production
-    return False  # Temporary safety measure
+def validate_authorization(token: str) -> bool:
+    """Validate authorization token (stub for production implementation)"""
+    # In production, implement proper JWT/OAuth validation
+    return token == os.getenv('API_TOKEN', 'default_secret')
 
+# ========== PRODUCTION CONFIGURATION ==========
 if __name__ == "__main__":
-    # Production configuration
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
+    port = int(os.getenv("FLASK_PORT", "5000"))
     
     if debug_mode:
-        logger.warning("Running in development mode - not suitable for production!")
-        app.run(host="0.0.0.0", port=5000, debug=debug_mode)
+        logger.warning("Running in DEVELOPMENT mode")
+        app.run(host="0.0.0.0", port=port, debug=debug_mode)
     else:
-        # In production, this should be run through Gunicorn
-        logger.info("Starting production server")
-        app.run(host="0.0.0.0", port=5000, debug=False)
+        logger.info("Starting PRODUCTION server")
+        from waitress import serve
+        serve(app, host="0.0.0.0", port=port)
+
