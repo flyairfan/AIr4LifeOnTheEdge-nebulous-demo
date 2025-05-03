@@ -14,10 +14,13 @@
 *.sqlite
 *.db
 
-# Environment and IDE files
+# Environment and credentials
 .env
 .env.local
-.venv
+.env.prod
+secrets.yaml
+
+# IDE and editor files
 .idea
 .vscode
 .DS_Store
@@ -25,16 +28,24 @@
 # Build and deployment artifacts
 dist/
 build/
-docker-compose*
+*.exe
+*.msi
+docker-compose*.yml
 aws-deployment/
 kube-deployment/
-**/node_modules/
 
 # Documentation
 *.pdf
-*.md
-docs/
+*.docx
+*.xlsx
+/docs
 
-# Local config overrides
+# Local overrides and temp files
 config.local.yaml
 **/temp/
+**/tmp/
+
+# Specific project exclusions
+/hardware
+/experimental
+*.drawio
