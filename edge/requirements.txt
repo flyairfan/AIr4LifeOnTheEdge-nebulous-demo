@@ -1,4 +1,4 @@
 # requirements.txt
-Flask==2.2.5    # Web server for the REST API
-paho-mqtt       # For MQTT interactions (if needed)
-requests        # For HTTP requests in the simulation scripts
+Flask==2.2.5           # Web server for the REST API
+paho-mqtt==1.6.1       # For MQTT interactions (if needed)
+requests               # For HTTP requests in the simulation scripts
