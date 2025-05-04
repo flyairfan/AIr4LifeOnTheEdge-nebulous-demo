@@ -1,5 +1,5 @@
 ![Docker Drone Demo](./demo/DockerDrone.png)
-See Video DockerDroneDemo.MP4 in Demo Folder (22MB),
+See Video **DockerDroneDemo.MP4 in Demo Folder** (22MB),
 and for an overview of real-world applications visit https://air.fan 
 
 # AIr4LifeOnTheEdge – NebulOuS Technical Validation
