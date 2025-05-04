@@ -1,6 +1,6 @@
 Demonstration Summary
 
-https://vimeo.com/1081179287
+For Video see DockerDroneDemo.MP4 (ca. 22 MB)
 
 We have successfully demonstrated an end-to-end edge AI workflow for predictive maintenance of solar panels, integrating multiple components:
 1. Sensor Simulation & Edge Node
