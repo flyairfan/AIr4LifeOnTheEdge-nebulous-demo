@@ -1,4 +1,4 @@
-![Docker Drone Demo](./drone/DockerDrone.png)
+![Docker Drone Demo](./demo/DockerDrone.png)
 
 # AIr4LifeOnTheEdge – NebulOuS Technical Validation
 
