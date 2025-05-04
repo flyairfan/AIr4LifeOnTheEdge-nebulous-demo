@@ -1,3 +1,5 @@
+![Docker Drone Demo](./drone/DockerDrone.png)
+
 # AIr4LifeOnTheEdge – NebulOuS Technical Validation
 
 Welcome to the technical validation repository for **AIr4LifeOnTheEdge**, an autonomous drone cleaning solution designed for persistent edge‑cloud orchestration in automated infrastructure maintenance. This repository demonstrates compliance with NebulOuS Open Call #2, Challenge #2 (IoT Application) by highlighting deployability, modularity, predictive maintenance capabilities, and integration-readiness.
