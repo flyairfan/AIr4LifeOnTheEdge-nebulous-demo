@@ -1,4 +1,4 @@
-![Docker Drone Demo](./demo/DockerDrone.png)
+![Docker Drone Demo](./demo/DockerDroneDemo.png)
 See Video **DockerDroneDemo.MP4 in Demo Folder** (22MB) without Audio or **with Audio** on https://youtu.be/NoKz3qr_0As ,
 and for an overview of real-world applications visit https://air.fan 
 
